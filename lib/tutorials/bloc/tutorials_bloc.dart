@@ -62,7 +62,6 @@ class TutorialsBloc extends Bloc<TutorialsEvent, TutorialsState> {
     SaveTutorial event,
     Emitter<TutorialsState> emit,
   ) async {
-    print("Saving tutorial:");
     assert(event.tutorial.id != null);
     final currentState = state.realState;
     emit(Loading(currentState: currentState));

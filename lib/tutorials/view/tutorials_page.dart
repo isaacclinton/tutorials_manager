@@ -100,8 +100,6 @@ class TutorialsPage extends StatelessWidget {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
                                                 builder: (context) {
-                                              print(
-                                                  "last played seconds ${tutorial.lastPlayedSeconds}");
                                               return VideoPlayer(
                                                 path: tutorial.videoPath,
                                                 initialDuration: Duration(

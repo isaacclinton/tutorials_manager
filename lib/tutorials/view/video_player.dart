@@ -2,8 +2,9 @@ import 'dart:io';
 
 import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/material.dart';
-import 'package:synchronized/synchronized.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
+import 'package:synchronized/synchronized.dart';
 import 'package:video_player/models/models.dart';
 
 class VideoPlayer extends StatefulWidget {
@@ -44,7 +45,7 @@ class VideoPlayerState extends State<VideoPlayer> {
   @override
   void initState() {
     super.initState();
-    print("Initial duration: ${widget.initialDuration}");
+    // print("Initial duration: ${widget.initialDuration}");
     VideoDimensions? videoDimensions;
     if (widget.videoDetails != null) {
       if (widget.videoDetails!.size != null) {
@@ -84,7 +85,7 @@ class VideoPlayerState extends State<VideoPlayer> {
 
       player.open(Media.file(File(widget.path)));
       if (widget.initialDuration != null) {
-        print("seeking to: ${widget.initialDuration}");
+        // print("seeking to: ${widget.initialDuration}");
         player.seek(widget.initialDuration!);
       }
       isLoading = false;
@@ -101,67 +102,97 @@ class VideoPlayerState extends State<VideoPlayer> {
     super.dispose();
   }
 
+  DateTime? lastTimeToggled;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: MouseRegion(
-        onHover: (event) {
-          setState(() {
-            isHovering = true;
-          });
-          lock.synchronized(() {
-            return Future.delayed(const Duration(seconds: 6)).then((value) {
-              if (mounted) {
-                setState(() {
-                  isHovering = false;
-                });
+      body: Focus(
+        autofocus: true,
+        onKey: (node, event) {
+          if (event.data.physicalKey == PhysicalKeyboardKey.space) {
+            final now = DateTime.now();
+            if (lastTimeToggled != null) {
+              final diffMillis = now.millisecondsSinceEpoch -
+                  lastTimeToggled!.millisecondsSinceEpoch;
+              lastTimeToggled = now;
+
+              if (diffMillis >= 100) {
+                return KeyEventResult.ignored;
               }
-            });
-          });
+            } else {
+              lastTimeToggled = now;
+            }
+
+            // print("pressed: ${event.data.physicalKey.debugName}");
+            if (!player.playback.isPlaying) {
+              player.play();
+            } else {
+              player.pause();
+            }
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
         },
-        child: Stack(
-          children: [
-            if (isLoading)
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
-            if (!isLoading)
-              Positioned.fill(
-                child: Video(
-                  player: player,
-                  volumeThumbColor: Colors.blue,
-                  volumeActiveColor: Colors.blue,
+        child: MouseRegion(
+          onHover: (event) {
+            setState(() {
+              isHovering = true;
+            });
+            lock.synchronized(() {
+              return Future.delayed(const Duration(seconds: 6)).then((value) {
+                if (mounted) {
+                  setState(() {
+                    isHovering = false;
+                  });
+                }
+              });
+            });
+          },
+          child: Stack(
+            children: [
+              if (isLoading)
+                const Center(
+                  child: CircularProgressIndicator(),
                 ),
-              ),
-            if (isHovering && !isLoading)
-              Positioned(
-                left: 0,
-                top: 0,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        widget.onClosed?.call(position.position);
-                        player.pause();
-                        player.dispose();
-                        Navigator.of(context).pop();
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      path.basename(widget.path),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+              if (!isLoading)
+                Positioned.fill(
+                  child: Video(
+                    player: player,
+                    volumeThumbColor: Colors.blue,
+                    volumeActiveColor: Colors.blue,
+                  ),
                 ),
-              ),
-          ],
+              if (isHovering && !isLoading)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          widget.onClosed?.call(position.position);
+                          player.pause();
+                          player.dispose();
+                          Navigator.of(context).pop();
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        path.basename(widget.path),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
