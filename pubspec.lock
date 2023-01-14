@@ -397,9 +397,11 @@ packages:
   local_storage_api:
     dependency: "direct main"
     description:
-      path: "D:\\custom_dart_libraries\\local_storage_api"
-      relative: false
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: "8b39948f9a69b9c00b2c83979853f9fdaced9a15"
+      url: "https://github.com/isaacclinton/dart_local_storage_api.git"
+    source: git
     version: "1.0.0"
   logging:
     dependency: transitive
@@ -619,9 +621,11 @@ packages:
   storage_api:
     dependency: "direct main"
     description:
-      path: "D:\\custom_dart_libraries\\storage_api"
-      relative: false
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: "28f5bad072ef45ac9c6346c0dfdff13cc0fab1db"
+      url: "https://github.com/isaacclinton/dart_storage_api.git"
+    source: git
     version: "1.0.0"
   stream_channel:
     dependency: transitive

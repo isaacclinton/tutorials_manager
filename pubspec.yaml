@@ -15,10 +15,12 @@ dependencies:
   dart_vlc: ^0.4.0
 
   storage_api:
-    path: D://custom_dart_libraries//storage_api
+    git:
+      url: https://github.com/isaacclinton/dart_storage_api.git
   
   local_storage_api:
-    path: D://custom_dart_libraries//local_storage_api
+    git:
+      url: https://github.com/isaacclinton/dart_local_storage_api.git
     
   flutter_bloc: ^8.1.1
   meta: ^1.8.0
