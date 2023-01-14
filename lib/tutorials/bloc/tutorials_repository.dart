@@ -16,6 +16,9 @@ Map<String, dynamic> getTutorialJson(Tutorial tutorial) {
     }
     json["videoDetails"] = detailsJson;
   }
+  if (tutorial.notes != null) {
+    json["notes"] = tutorial.notes?.toJson();
+  }
   return json;
 }
 
@@ -30,8 +33,9 @@ class TutorialsRepository {
     final toReturn = <Tutorial>[];
     for (final key in keys) {
       final tutorialJson = await _storageApi.getValue(key);
-      final tutorial =
-          Tutorial.fromJson(jsonDecode(jsonEncode(Map.from(tutorialJson))));
+      final tutorial = Tutorial.fromJson(
+        jsonDecode(jsonEncode(Map.from(tutorialJson))),
+      );
       toReturn.add(tutorial);
     }
     return toReturn;

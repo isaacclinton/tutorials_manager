@@ -15,10 +15,14 @@ class VideoPlayer extends StatefulWidget {
     this.onClosed,
     this.onPaused,
     this.initialDuration,
+    this.controller,
+    this.end,
   });
 
   final String path;
   final VideoDetails? videoDetails;
+  final Widget? end;
+  final PlayerController? controller;
   final Duration? initialDuration;
   final Function(Duration? duration)? onClosed;
   final Function(Duration? duration)? onPaused;
@@ -56,6 +60,24 @@ class VideoPlayerState extends State<VideoPlayer> {
       }
     }
     player = Player(id: 0, videoDimensions: videoDimensions);
+
+    widget.controller?._getCurrentDuration = () {
+      return player.position.position ?? const Duration();
+    };
+
+    widget.controller?._dispose = () {
+      dispose();
+    };
+
+    widget.controller?.listen((state) {
+      if (state == PlayerState.paused && player.playback.isPlaying) {
+        player.pause();
+      } else if (state == PlayerState.stopped && player.playback.isPlaying) {
+        player.stop();
+      } else if (state == PlayerState.playing && !player.playback.isPlaying) {
+        player.play();
+      }
+    });
 
     if (mounted) {
       player.positionStream.listen((value) {
@@ -117,14 +139,13 @@ class VideoPlayerState extends State<VideoPlayer> {
                   lastTimeToggled!.millisecondsSinceEpoch;
               lastTimeToggled = now;
 
-              if (diffMillis >= 100) {
+              if (diffMillis <= 1000) {
                 return KeyEventResult.ignored;
               }
             } else {
               lastTimeToggled = now;
             }
 
-            // print("pressed: ${event.data.physicalKey.debugName}");
             if (!player.playback.isPlaying) {
               player.play();
             } else {
@@ -167,28 +188,37 @@ class VideoPlayerState extends State<VideoPlayer> {
                 Positioned(
                   left: 0,
                   top: 0,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          widget.onClosed?.call(position.position);
-                          player.pause();
-                          player.dispose();
-                          Navigator.of(context).pop();
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                widget.onClosed?.call(position.position);
+                                player.pause();
+                                player.dispose();
+                                Navigator.of(context).pop();
+                              },
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              path.basename(widget.path),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      Text(
-                        path.basename(widget.path),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                        if (widget.end != null) widget.end!,
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -196,5 +226,52 @@ class VideoPlayerState extends State<VideoPlayer> {
         ),
       ),
     );
+  }
+}
+
+enum PlayerState {
+  playing,
+  stopped,
+  paused,
+}
+
+typedef PlayerControllerListener = void Function(PlayerState state);
+
+class PlayerController {
+  PlayerController();
+
+  final _listeners = <PlayerControllerListener>[];
+
+  Duration Function()? _getCurrentDuration;
+  void Function()? _dispose;
+
+  void listen(PlayerControllerListener listener) {
+    _listeners.add(listener);
+  }
+
+  Duration get currentDuration {
+    return _getCurrentDuration?.call() ?? const Duration();
+  }
+
+  void pause() {
+    for (final listener in _listeners) {
+      listener(PlayerState.paused);
+    }
+  }
+
+  void stop() {
+    for (final listener in _listeners) {
+      listener(PlayerState.stopped);
+    }
+  }
+
+  void dispose() {
+    _dispose?.call();
+  }
+
+  void play() {
+    for (final listener in _listeners) {
+      listener(PlayerState.playing);
+    }
   }
 }

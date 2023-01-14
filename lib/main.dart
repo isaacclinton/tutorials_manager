@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:local_storage_api/local_storage_api.dart';
+
 import 'package:video_player/tutorials/tutorials.dart';
 
 void main() async {

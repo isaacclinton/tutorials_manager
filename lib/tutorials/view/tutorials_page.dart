@@ -1,11 +1,11 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:video_player/models/models.dart';
 import 'package:video_player/tutorials/tutorials.dart';
 import 'package:video_player/tutorials/view/tutorial_item.dart';
-import 'package:video_player/tutorials/view/video_player.dart';
-import 'package:video_player/utils/get_video_details.dart';
+import 'package:video_player/tutorials/view/video_player_page.dart';
+
+import 'delete_tutorial_dialog.dart';
+import 'top_bar.dart';
 
 class TutorialsPage extends StatelessWidget {
   const TutorialsPage({super.key});
@@ -20,7 +20,6 @@ class TutorialsPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const TopBar(),
-            // const SizedBox(height: 50),
             BlocBuilder<TutorialsBloc, TutorialsState>(
               builder: (context, state1) {
                 final state = state1.realState;
@@ -59,40 +58,7 @@ class TutorialsPage extends StatelessWidget {
                                           showDialog(
                                             context: context,
                                             builder: (context) {
-                                              return Center(
-                                                child: AlertDialog(
-                                                  title: const Text(
-                                                      "Delete tutorial"),
-                                                  content: SizedBox(
-                                                    width: 400,
-                                                    child: Text(
-                                                      "Are you sure you want to delete '${tutorial.videoPath}'?",
-                                                    ),
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        context
-                                                            .read<
-                                                                TutorialsBloc>()
-                                                            .add(DeleteTutorial(
-                                                                tutorial.id!));
-
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child: const Text("Yes"),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child: const Text("No"),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
+                                              return DeleteTutorialDialog(tutorial: tutorial);
                                             },
                                           );
                                         },
@@ -100,43 +66,8 @@ class TutorialsPage extends StatelessWidget {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
                                                 builder: (context) {
-                                              return VideoPlayer(
-                                                path: tutorial.videoPath,
-                                                initialDuration: Duration(
-                                                    seconds: tutorial
-                                                        .lastPlayedSeconds),
-                                                onClosed: (duration) {
-                                                  // print("onClosed: $duration");
-                                                  context
-                                                      .read<TutorialsBloc>()
-                                                      .add(SaveTutorial(
-                                                        tutorial:
-                                                            tutorial.copyWith(
-                                                          lastOpened:
-                                                              DateTime.now(),
-                                                          lastPlayedSeconds: duration
-                                                                  ?.inSeconds ??
-                                                              tutorial
-                                                                  .lastPlayedSeconds,
-                                                        ),
-                                                      ));
-                                                },
-                                                onPaused: (duration) {
-                                                  // print("onPaused: $duration");
-                                                  context
-                                                      .read<TutorialsBloc>()
-                                                      .add(SaveTutorial(
-                                                        tutorial:
-                                                            tutorial.copyWith(
-                                                          lastOpened:
-                                                              DateTime.now(),
-                                                          lastPlayedSeconds: duration
-                                                                  ?.inSeconds ??
-                                                              tutorial
-                                                                  .lastPlayedSeconds,
-                                                        ),
-                                                      ));
-                                                },
+                                              return VideoPlayerPage(
+                                                tutorial: tutorial,
                                               );
                                             }),
                                           );
@@ -156,51 +87,6 @@ class TutorialsPage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class TopBar extends StatelessWidget {
-  const TopBar({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Tutorials", style: TextStyle(fontSize: 24)),
-        const SizedBox(width: 100),
-        TextButton(
-          onPressed: () {
-            FilePicker.platform
-                .pickFiles(
-              type: FileType.video,
-            )
-                .then((result) {
-              if (result == null ||
-                  result.paths.isEmpty ||
-                  result.paths[0] == null) {
-                return;
-              }
-              final path = result.paths[0]!;
-              getVideoDetails(path).then((details) {
-                final tutorial = Tutorial(
-                  videoPath: path,
-                  lastOpened: DateTime.now(),
-                  lastPlayedSeconds: 0,
-                  videoDetails: details,
-                );
-                context
-                    .read<TutorialsBloc>()
-                    .add(AddTutorial(tutorial: tutorial));
-              });
-            });
-          },
-          child: const Text("Add new"),
-        ),
-      ],
     );
   }
 }
